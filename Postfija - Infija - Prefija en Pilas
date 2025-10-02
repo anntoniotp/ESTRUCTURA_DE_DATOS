@@ -1,0 +1,99 @@
+# postfija
+def evaluar_postfija(expresion):
+    pila = []
+    operadores = {"+", "-", "*", "/", "^"}
+
+    for token in expresion.split():
+        if token not in operadores:  
+            pila.append(float(token))
+        else:  
+            b = pila.pop()
+            a = pila.pop()
+            if token == "+":
+                pila.append(a + b)
+            elif token == "-":
+                pila.append(a - b)
+            elif token == "*":
+                pila.append(a * b)
+            elif token == "/":
+                pila.append(a / b)
+            elif token == "^":
+                pila.append(a ** b)
+
+    return pila.pop()
+
+
+expresion = "3 4 2 * 1 5 - 2 3 ^ ^ / +"  
+print("Expresión posfija:", expresion)
+print("Resultado =", evaluar_postfija(expresion))
+
+
+
+#infija
+def infija_a_postfija(expresion):
+    precedencia = {'+': 1, '-': 1, '*': 2, '/': 2, '^': 3}
+    salida = []
+    operadores = []
+    tokens = expresion.split()
+    for token in tokens:
+        if token.isnumeric():
+            salida.append(token)
+        elif token in precedencia:
+            while (operadores and operadores[-1] != '(' and
+                   precedencia.get(operadores[-1], 0) >= precedencia[token]):
+                salida.append(operadores.pop())
+            operadores.append(token)
+        elif token == '(':
+            operadores.append(token)
+        elif token == ')':
+            while operadores and operadores[-1] != '(':
+                salida.append(operadores.pop())
+            operadores.pop()
+    while operadores:
+        salida.append(operadores.pop())
+    return " ".join(salida)
+
+def evaluar_postfija(expresion):
+    pila = []
+    for token in expresion.split():
+        if token.isnumeric():
+            pila.append(float(token))
+        else:
+            b = pila.pop()
+            a = pila.pop()
+            if token == '+': pila.append(a + b)
+            elif token == '-': pila.append(a - b)
+            elif token == '*': pila.append(a * b)
+            elif token == '/': pila.append(a / b)
+            elif token == '^': pila.append(a ** b)
+    return pila.pop()
+
+expresion_infija = "( 3 + 4 ) * 2 / ( 1 - 5 )"
+postfija = infija_a_postfija(expresion_infija)
+resultado = evaluar_postfija(postfija)
+print("Infija:", expresion_infija)
+print("Posfija:", postfija)
+print("Resultado:", resultado)
+
+
+
+#prefija
+def evaluar_prefija(expresion):
+    pila = []
+    tokens = expresion.split()[::-1]
+    for token in tokens:
+        if token.isnumeric():
+            pila.append(float(token))
+        else:
+            a = pila.pop()
+            b = pila.pop()
+            if token == '+': pila.append(a + b)
+            elif token == '-': pila.append(a - b)
+            elif token == '*': pila.append(a * b)
+            elif token == '/': pila.append(a / b)
+            elif token == '^': pila.append(a ** b)
+    return pila.pop()
+
+expresion = "+ 3 * 4 2"
+print("Prefija:", expresion)
+print("Resultado:", evaluar_prefija(expresion))
