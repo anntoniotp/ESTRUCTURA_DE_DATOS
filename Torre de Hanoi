@@ -1,0 +1,64 @@
+class Pila:
+    def __init__(self, nombre):
+        self.items = []
+        self.nombre = nombre
+
+    def push(self, valor):
+        self.items.append(valor)
+
+    def pop(self):
+        if not self.esta_vacia():
+            return self.items.pop()
+        else:
+            raise IndexError(f"La torre {self.nombre} está vacía")
+
+    def cima(self):
+        return self.items[-1] if not self.esta_vacia() else None
+
+    def esta_vacia(self):
+        return len(self.items) == 0
+
+    def mostrar(self):
+        print(f"Torre {self.nombre}: {list(reversed(self.items))}")
+
+
+def mover_disco(origen, destino):
+    disco = origen.pop()
+    destino.push(disco)
+    print(f"Mover disco {disco} de {origen.nombre} → {destino.nombre}")
+    mostrar_torres()
+
+
+def hanoi(n, origen, auxiliar, destino):
+    if n == 1:
+        mover_disco(origen, destino)
+    else:
+        hanoi(n - 1, origen, destino, auxiliar)
+        mover_disco(origen, destino)
+        hanoi(n - 1, auxiliar, origen, destino)
+
+
+def mostrar_torres():
+    torreA.mostrar()
+    torreB.mostrar()
+    torreC.mostrar()
+    print("-" * 30)
+
+
+if __name__ == "__main__":
+    
+    torreA = Pila("A")
+    torreB = Pila("B")
+    torreC = Pila("C")
+
+
+    for disco in range(3, 0, -1):
+        torreA.push(disco)
+
+    print("=== Torres de Hanoi con 3 discos ===")
+    mostrar_torres()
+
+    hanoi(3, torreA, torreB, torreC)
+
+    print("=== Resuelto ===")
+    mostrar_torres()
