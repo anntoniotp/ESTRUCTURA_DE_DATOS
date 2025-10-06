@@ -1,0 +1,103 @@
+class Pila:
+    def __init__(self):
+        self.items = []
+
+    def push(self, valor):
+        self.items.append(valor)
+
+    def pop(self):
+        if not self.esta_vacia():
+            return self.items.pop()
+        else:
+            raise IndexError("La pila está vacía")
+
+    def cima(self):
+        return self.items[-1] if not self.esta_vacia() else None
+
+    def esta_vacia(self):
+        return len(self.items) == 0
+
+
+def infija_a_postfija(expresion):
+    precedencia = {'+': 1, '-': 1, '*': 2, '/': 2, '^': 3}
+    asociatividad = {'+': 'I', '-': 'I', '*': 'I', '/': 'I', '^': 'D'} 
+    pila = Pila()
+    salida = []
+
+    tokens = expresion.split()
+
+    for token in tokens:
+        if token.isdigit():  
+            salida.append(token)
+        elif token in precedencia:
+            while (not pila.esta_vacia() and pila.cima() != '(' and
+                   (precedencia[pila.cima()] > precedencia[token] or
+                   (precedencia[pila.cima()] == precedencia[token] and asociatividad[token] == 'I'))):
+                salida.append(pila.pop())
+            pila.push(token)
+        elif token == '(':
+            pila.push(token)
+        elif token == ')':
+            while not pila.esta_vacia() and pila.cima() != '(':
+                salida.append(pila.pop())
+            pila.pop() 
+
+    while not pila.esta_vacia():
+        salida.append(pila.pop())
+
+    return " ".join(salida)
+
+
+def postfija_a_prefija(expresion_postfija):
+    pila = Pila()
+    tokens = expresion_postfija.split()
+
+    for token in tokens:
+        if token.isdigit():
+            pila.push(token)
+        else:
+            op2 = pila.pop()
+            op1 = pila.pop()
+            nuevo = f"{token} {op1} {op2}"
+            pila.push(nuevo)
+
+    return pila.pop()
+
+
+def evaluar_postfija(expresion_postfija):
+    pila = Pila()
+    tokens = expresion_postfija.split()
+
+    for token in tokens:
+        if token.isdigit():
+            pila.push(int(token))
+        else:
+            b = pila.pop()
+            a = pila.pop()
+            if token == '+':
+                pila.push(a + b)
+            elif token == '-':
+                pila.push(a - b)
+            elif token == '*':
+                pila.push(a * b)
+            elif token == '/':
+                pila.push(a / b)
+            elif token == '^':
+                pila.push(a ** b)
+    return pila.pop()
+
+
+if __name__ == "__main__":
+    print("=== Conversor y Evaluador de Expresiones ===")
+
+    expresion = input("Introduce una expresión INFIX (usa espacios entre tokens): ")
+
+    postfija = infija_a_postfija(expresion)
+    prefija = postfija_a_prefija(postfija)
+    resultado = evaluar_postfija(postfija)
+
+    print("\n=== RESULTADOS ===")
+    print("Expresión Infija: ", expresion)
+    print("Expresión Posfija:", postfija)
+    print("Expresión Prefija:", prefija)
+    print("Resultado Evaluado:", resultado)
