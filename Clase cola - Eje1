@@ -1,0 +1,39 @@
+from queue import Queue
+
+def cola_a_lista(q):
+    temp = Queue()
+    elementos = []
+    while not q.empty():
+        elemento = q.get()
+        elementos.append(elemento)
+        temp.put(elemento)
+
+    while not temp.empty():
+        q.put(temp.get())
+    return elementos
+
+cola1 = Queue()
+cola2 = Queue()
+
+numeros1 = [4, 4, 6, 8, 10]
+numeros2 = [6, 3, 5, 7, 9]
+
+for n in numeros1:
+    cola1.put(n)
+
+for n in numeros2:
+    cola2.put(n)
+
+cola3 = Queue()
+lista1 = cola_a_lista(cola1)
+lista2 = cola_a_lista(cola2)
+
+for i in range(len(lista1)):
+    cola3.put(lista1[i] + lista2[i])
+
+lista3 = cola_a_lista(cola3)
+
+print("\n{:<10} {:<10} {:<10}".format("Cola 1", "Cola 2", "Cola Resultado"))
+print("-" * 32)
+for a, b, c in zip(lista1, lista2, lista3):
+    print("{:<10} {:<10} {:<10}".format(a, b, c))
