@@ -1,0 +1,63 @@
+from queue import Queue
+
+class SistemaSeguros:
+    def __init__(self):
+        self.colas = {}
+        self.contadores = {}
+
+    def llegada_cliente(self, servicio):
+        """Simula la llegada de un cliente (C)"""
+        if servicio not in self.colas:
+            self.colas[servicio] = Queue()
+            self.contadores[servicio] = 0
+
+        self.contadores[servicio] += 1
+        turno = f"S{servicio}-{self.contadores[servicio]}"
+        self.colas[servicio].put(turno)
+        print(f"Cliente registrado en servicio {servicio}. Turno asignado: {turno}")
+
+    def atender_cliente(self, servicio):
+        """Simula la atención de un cliente (A)"""
+        if servicio not in self.colas or self.colas[servicio].empty():
+            print(f"No hay clientes esperando en el servicio {servicio}.")
+        else:
+            turno = self.colas[servicio].get()
+            print(f"Atendiendo al cliente con turno: {turno}")
+
+    def ejecutar(self):
+        """Bucle principal del sistema"""
+        print("=== Sistema de Colas de Servicios ===")
+        print("Comandos:")
+        print("  C <número_servicio>  → Llega un cliente")
+        print("  A <número_servicio>  → Atender un cliente")
+        print("  X                    → Salir\n")
+
+        while True:
+            comando = input("Ingrese comando: ").strip().upper()
+
+            if comando == "X":
+                print("Saliendo del sistema...")
+                break
+
+            partes = comando.split()
+            if len(partes) != 2:
+                print("⚠️ Comando inválido. Ejemplo: C 1 o A 2")
+                continue
+
+            accion, servicio = partes[0], partes[1]
+            if not servicio.isdigit():
+                print("⚠️ El número de servicio debe ser un número entero.")
+                continue
+
+            servicio = int(servicio)
+
+            if accion == "C":
+                self.llegada_cliente(servicio)
+            elif accion == "A":
+                self.atender_cliente(servicio)
+            else:
+                print("⚠️ Comando no reconocido. Use C, A o X.")
+
+if __name__ == "__main__":
+    sistema = SistemaSeguros()
+    sistema.ejecutar()
