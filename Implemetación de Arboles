@@ -1,0 +1,166 @@
+import tkinter as tk
+from tkinter import messagebox
+
+
+class Nodo:
+    def __init__(self, valor):
+        self.valor = valor
+        self.izq = None
+        self.der = None
+
+
+class ArbolBinario:
+    def __init__(self):
+        self.raiz = None
+
+    def insertar(self, valor):
+        self.raiz = self._insertar(self.raiz, valor)
+
+    def _insertar(self, nodo, valor):
+        if nodo is None:
+            return Nodo(valor)
+        if valor < nodo.valor:
+            nodo.izq = self._insertar(nodo.izq, valor)
+        elif valor > nodo.valor:
+            nodo.der = self._insertar(nodo.der, valor)
+        return nodo
+
+    def buscar(self, valor):
+        return self._buscar(self.raiz, valor)
+
+    def _buscar(self, nodo, valor):
+        if nodo is None:
+            return False
+        if nodo.valor == valor:
+            return True
+        if valor < nodo.valor:
+            return self._buscar(nodo.izq, valor)
+        else:
+            return self._buscar(nodo.der, valor)
+
+    def eliminar(self, valor):
+        self.raiz = self._eliminar(self.raiz, valor)
+
+    def _eliminar(self, nodo, valor):
+        if nodo is None:
+            return None
+        if valor < nodo.valor:
+            nodo.izq = self._eliminar(nodo.izq, valor)
+        elif valor > nodo.valor:
+            nodo.der = self._eliminar(nodo.der, valor)
+        else:
+            if nodo.izq is None:
+                return nodo.der
+            elif nodo.der is None:
+                return nodo.izq
+            temp = self._minimo(nodo.der)
+            nodo.valor = temp.valor
+            nodo.der = self._eliminar(nodo.der, temp.valor)
+        return nodo
+
+    def _minimo(self, nodo):
+        while nodo.izq:
+            nodo = nodo.izq
+        return nodo
+
+
+class ArbolApp:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("🌳 Árbol Binario Visual")
+        self.master.geometry("900x600")
+        self.master.configure(bg="#e6f4ea")
+
+        self.arbol = ArbolBinario()
+
+        self.frame_controles = tk.Frame(master, bg="#c7f0d8", pady=10)
+        self.frame_controles.pack(fill=tk.X)
+
+        tk.Label(self.frame_controles, text="Valor:", font=("Arial", 12), bg="#c7f0d8").pack(side=tk.LEFT, padx=5)
+        self.entry_valor = tk.Entry(self.frame_controles, font=("Arial", 12), width=10)
+        self.entry_valor.pack(side=tk.LEFT, padx=5)
+
+        tk.Button(self.frame_controles, text="Insertar", bg="#22c55e", fg="white",
+                  font=("Arial", 11, "bold"), command=self.insertar).pack(side=tk.LEFT, padx=5)
+        tk.Button(self.frame_controles, text="Buscar", bg="#2563eb", fg="white",
+                  font=("Arial", 11, "bold"), command=self.buscar).pack(side=tk.LEFT, padx=5)
+        tk.Button(self.frame_controles, text="Eliminar", bg="#dc2626", fg="white",
+                  font=("Arial", 11, "bold"), command=self.eliminar).pack(side=tk.LEFT, padx=5)
+        tk.Button(self.frame_controles, text="Limpiar", bg="#f59e0b", fg="white",
+                  font=("Arial", 11, "bold"), command=self.limpiar).pack(side=tk.LEFT, padx=5)
+
+        self.label_estado = tk.Label(master, text="", bg="#e6f4ea", fg="#065f46",
+                                     font=("Arial", 13, "bold"))
+        self.label_estado.pack(pady=10)
+
+        self.canvas = tk.Canvas(master, bg="white", width=860, height=450)
+        self.canvas.pack(padx=20, pady=10)
+
+    def insertar(self):
+        valor = self._leer_valor()
+        if valor is None:
+            return
+        self.arbol.insertar(valor)
+        self.label_estado.config(text=f"🌱 Nodo {valor} insertado correctamente")
+        self._dibujar_arbol()
+
+    def eliminar(self):
+        valor = self._leer_valor()
+        if valor is None:
+            return
+        self.arbol.eliminar(valor)
+        self.label_estado.config(text=f"🪓 Nodo {valor} eliminado")
+        self._dibujar_arbol()
+
+    def buscar(self):
+        valor = self._leer_valor()
+        if valor is None:
+            return
+        encontrado = self.arbol.buscar(valor)
+        if encontrado:
+            self.label_estado.config(text=f"✅ Nodo {valor} encontrado")
+        else:
+            self.label_estado.config(text=f"❌ Nodo {valor} no existe")
+
+    def limpiar(self):
+        self.arbol.raiz = None
+        self.canvas.delete("all")
+        self.label_estado.config(text="🧹 Árbol limpiado")
+
+    def _leer_valor(self):
+        try:
+            valor = int(self.entry_valor.get())
+            self.entry_valor.delete(0, tk.END)
+            return valor
+        except ValueError:
+            messagebox.showwarning("Valor inválido", "Ingrese un número entero.")
+            return None
+
+    def _dibujar_arbol(self):
+        self.canvas.delete("all")
+        if not self.arbol.raiz:
+            return
+        self._dibujar_nodo(self.arbol.raiz, 430, 40, 200)
+
+    def _dibujar_nodo(self, nodo, x, y, separacion):
+        if nodo.izq:
+            x_izq = x - separacion
+            y_izq = y + 80
+            self.canvas.create_line(x, y, x_izq, y_izq, fill="#4ade80", width=2)
+            self._dibujar_nodo(nodo.izq, x_izq, y_izq, separacion / 1.6)
+
+        if nodo.der:
+            x_der = x + separacion
+            y_der = y + 80
+            self.canvas.create_line(x, y, x_der, y_der, fill="#4ade80", width=2)
+            self._dibujar_nodo(nodo.der, x_der, y_der, separacion / 1.6)
+
+        r = 20
+        self.canvas.create_oval(x - r, y - r, x + r, y + r, fill="#16a34a", outline="#064e3b", width=2)
+        self.canvas.create_text(x, y, text=str(nodo.valor), fill="white", font=("Arial", 12, "bold"))
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = ArbolApp(root)
+    root.mainloop()
