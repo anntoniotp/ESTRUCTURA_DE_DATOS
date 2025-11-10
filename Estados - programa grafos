@@ -1,0 +1,185 @@
+import matplotlib
+matplotlib.use("TkAgg") 
+
+import tkinter as tk
+from tkinter import ttk, filedialog
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import geopandas as gpd
+import networkx as nx
+import time
+
+
+
+estados = [
+    "Sonora",
+    "Chihuahua",
+    "Coahuila",
+    "Nuevo León",
+    "Tamaulipas",
+    "Durango",
+    "Zacatecas"
+]
+
+
+mx = gpd.read_file(
+    "https://raw.githubusercontent.com/angelnmara/geojson/master/mexicoHigh.json"
+)
+mx7 = mx[mx["name"].isin(estados)]
+
+
+coords = {}
+for i, row in mx7.iterrows():
+    c = row.geometry.centroid
+    coords[row["name"]] = (c.x, c.y)
+
+G = nx.Graph()
+
+for e in estados:
+    G.add_node(e)
+
+conexiones = [
+    ("Sonora", "Chihuahua", 5),
+    ("Chihuahua", "Coahuila", 4),
+    ("Coahuila", "Nuevo León", 3),
+    ("Nuevo León", "Tamaulipas", 2),
+    ("Durango", "Zacatecas", 3),
+    ("Chihuahua", "Durango", 6),
+    ("Coahuila", "Zacatecas", 4)
+]
+
+for a, b, costo in conexiones:
+    G.add_edge(a, b, weight=costo)
+
+def dibujar_mapa(camino=None, paso_actual=None):
+    fig, ax = plt.subplots(figsize=(9, 9))
+
+    mx.plot(ax=ax, color="lightgray", edgecolor="black")
+    mx7.plot(ax=ax, color="lightblue", edgecolor="black")
+
+    for estado, (x, y) in coords.items():
+        ax.plot(x, y, "ro", markersize=7)
+        ax.text(x, y, estado, fontsize=9, ha="left")
+
+    for a, b, costo in conexiones:
+        x1, y1 = coords[a]
+        x2, y2 = coords[b]
+        ax.plot([x1, x2], [y1, y2], "b-", linewidth=2)
+        ax.text((x1+x2)/2, (y1+y2)/2, str(costo), color="blue", fontsize=10)
+
+    if camino:
+        for i in range(len(camino)-1):
+            e1, e2 = camino[i], camino[i+1]
+            x1, y1 = coords[e1]
+            x2, y2 = coords[e2]
+
+            color = "red" if paso_actual is None or i <= paso_actual else "orange"
+            lw = 4 if i == paso_actual else 2
+
+            ax.plot([x1, x2], [y1, y2], color=color, linewidth=lw)
+
+    ax.set_title("Mapa de México con Grafo de 7 Estados")
+    return fig
+
+
+def calcular_camino_simple():
+    inicio = combo_inicio.get()
+    fin = combo_fin.get()
+
+    if inicio == "" or fin == "":
+        resultado.set("Seleccione inicio y destino.")
+        return
+
+    camino = nx.shortest_path(G, inicio, fin, weight="weight")
+    costo = nx.shortest_path_length(G, inicio, fin, weight="weight")
+
+    resultado.set(f"Camino sin repetir:\n{camino}\nCosto total: {costo}")
+    actualizar_grafica(camino)
+
+def calcular_camino_ciclo():
+    ciclo = nx.find_cycle(G, orientation="ignore")
+    camino = [a for a, b, *_ in ciclo] + [ciclo[-1][1]]
+    costo = sum(G[a][b]["weight"] for a, b, *_ in ciclo)
+
+    resultado.set(f"Camino repitiendo:\n{camino}\nCosto total: {costo}")
+    actualizar_grafica(camino)
+
+def animar_camino():
+    inicio = combo_inicio.get()
+    fin = combo_fin.get()
+
+    if inicio == "" or fin == "":
+        resultado.set("Seleccione inicio y destino.")
+        return
+
+    camino = nx.shortest_path(G, inicio, fin, weight="weight")
+
+    for paso in range(len(camino)-1):
+        actualizar_grafica(camino, paso_actual=paso)
+        root.update()
+        time.sleep(1)
+
+
+def guardar_imagen():
+    fig = dibujar_mapa()
+    archivo = filedialog.asksaveasfilename(defaultextension=".png",
+                                           filetypes=[("PNG", "*.png")])
+    if archivo:
+        fig.savefig(archivo)
+        resultado.set(f"Imagen guardada en: {archivo}")
+
+
+root = tk.Tk()
+root.title("Mapa de México - Grafo Avanzado")
+root.geometry("1200x850")
+
+resultado = tk.StringVar()
+resultado.set("Seleccione opciones para iniciar.")
+
+frame_select = ttk.Frame(root)
+frame_select.pack(pady=10)
+
+ttk.Label(frame_select, text="Nodo inicial:").grid(row=0, column=0, padx=5)
+combo_inicio = ttk.Combobox(frame_select, values=estados, width=15)
+combo_inicio.grid(row=0, column=1, padx=5)
+
+ttk.Label(frame_select, text="Nodo final:").grid(row=0, column=2, padx=5)
+combo_fin = ttk.Combobox(frame_select, values=estados, width=15)
+combo_fin.grid(row=0, column=3, padx=5)
+
+frame_botones = ttk.Frame(root)
+frame_botones.pack(pady=10)
+
+ttk.Button(frame_botones, text="Camino sin repetir",
+           command=calcular_camino_simple).grid(row=0, column=0, padx=10)
+
+ttk.Button(frame_botones, text="Camino con repetición",
+           command=calcular_camino_ciclo).grid(row=0, column=1, padx=10)
+
+ttk.Button(frame_botones, text="Animar recorrido",
+           command=animar_camino).grid(row=0, column=2, padx=10)
+
+ttk.Button(frame_botones, text="Guardar como imagen",
+           command=guardar_imagen).grid(row=0, column=3, padx=10)
+
+ttk.Label(root, textvariable=resultado).pack(pady=10)
+
+frame_grafica = tk.Frame(root)
+frame_grafica.pack()
+
+canvas = None
+
+def actualizar_grafica(camino=None, paso_actual=None):
+    global canvas
+    fig = dibujar_mapa(camino, paso_actual)
+
+    if canvas:
+        canvas.get_tk_widget().destroy()
+
+    canvas = FigureCanvasTkAgg(fig, master=frame_grafica)
+    canvas.draw()
+    canvas.get_tk_widget().pack()
+
+actualizar_grafica()
+
+root.mainloop()
