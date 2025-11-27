@@ -1,0 +1,47 @@
+def ordenamiento_burbuja(lista):
+    n = len(lista)
+    for i in range(n):
+        for j in range(0, n - i - 1):
+            if lista[j] > lista[j + 1]:
+                lista[j], lista[j + 1] = lista[j + 1], lista[j]
+    return lista
+
+def ordenamiento_por_insercion(lista):
+    for i in range(1, len(lista)):
+        clave = lista[i]
+        j = i - 1
+        while j >= 0 and clave < lista[j]:
+            lista[j + 1] = lista[j]
+            j -= 1
+        lista[j + 1] = clave
+    return lista
+
+def ordenamiento_por_seleccion(lista):
+    n = len(lista)
+    for i in range(n):
+        indice_minimo = i
+        for j in range(i + 1, n):
+            if lista[j] < lista[indice_minimo]:
+                indice_minimo = j
+        lista[i], lista[indice_minimo] = lista[indice_minimo], lista[i]
+    return lista
+
+
+datos_originales = [55, 10, 80, 20, 45, 95, 30]
+
+print("--- Métodos de Ordenamiento 🚀 ---")
+
+print("\n1. Ordenamiento Burbuja 🎈")
+print(f"Lista original: {datos_originales}")
+lista_ordenada_burbuja = ordenamiento_burbuja(datos_originales.copy())
+print(f"Lista ordenada: {lista_ordenada_burbuja}")
+
+print("\n2. Ordenamiento por Inserción 🗃️")
+print(f"Lista original: {datos_originales}")
+lista_ordenada_insercion = ordenamiento_por_insercion(datos_originales.copy())
+print(f"Lista ordenada: {lista_ordenada_insercion}")
+
+print("\n3. Ordenamiento por Selección 🎯")
+print(f"Lista original: {datos_originales}")
+lista_ordenada_seleccion = ordenamiento_por_seleccion(datos_originales.copy())
+print(f"Lista ordenada: {lista_ordenada_seleccion}")
