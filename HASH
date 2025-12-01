@@ -1,0 +1,176 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
+import time
+
+class BusquedaApp:
+    def __init__(self, master):
+        self.master = master
+        master.title("📊 Algoritmos de Búsqueda (Secuencial, Binaria, Hash)")
+        master.geometry("600x650")
+        
+        self.lista_principal = []
+        self.hash_map = {}
+        
+        self.create_widgets()
+
+    def create_widgets(self):
+        """Define la estructura y elementos de la GUI."""
+        
+        style = ttk.Style()
+        style.configure('TButton', font=('Arial', 10, 'bold'), padding=6)
+        style.configure('TLabel', font=('Arial', 10))
+        
+        data_frame = ttk.LabelFrame(self.master, text="📝 1. Ingreso de Datos", padding="10 10 10 10")
+        data_frame.pack(padx=10, pady=10, fill="x")
+
+        ttk.Label(data_frame, text="Lista (ej: 10,20,5,35,15):").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.data_entry = ttk.Entry(data_frame, width=50)
+        self.data_entry.grid(row=0, column=1, padx=5, pady=5)
+        self.data_entry.insert(0, "10, 5, 30, 15, 25, 40, 20") # Datos de ejemplo
+
+        save_button = ttk.Button(data_frame, text="💾 Cargar y Preparar Datos", command=self.cargar_datos)
+        save_button.grid(row=1, column=0, columnspan=2, pady=10)
+
+        self.status_label = ttk.Label(data_frame, text="Estado: No hay datos cargados.", foreground="red")
+        self.status_label.grid(row=2, column=0, columnspan=2, pady=5)
+        
+        search_frame = ttk.LabelFrame(self.master, text="🔍 2. Realizar Búsqueda", padding="10 10 10 10")
+        search_frame.pack(padx=10, pady=10, fill="x")
+
+        ttk.Label(search_frame, text="Elemento a buscar:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.element_entry = ttk.Entry(search_frame, width=20)
+        self.element_entry.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+
+        ttk.Button(search_frame, text="🔍 Búsqueda Secuencial", command=lambda: self.ejecutar_busqueda('secuencial')).grid(row=1, column=0, padx=5, pady=10, sticky="w")
+        ttk.Button(search_frame, text="🔎 Búsqueda Binaria", command=lambda: self.ejecutar_busqueda('binaria')).grid(row=1, column=1, padx=5, pady=10, sticky="w")
+        ttk.Button(search_frame, text="🔗 Búsqueda Hash", command=lambda: self.ejecutar_busqueda('hash')).grid(row=1, column=2, padx=5, pady=10, sticky="w")
+        
+        result_frame = ttk.LabelFrame(self.master, text="📈 3. Resultados", padding="10 10 10 10")
+        result_frame.pack(padx=10, pady=10, fill="both", expand=True)
+
+        self.result_text = tk.Text(result_frame, wrap="word", height=15, font=('Consolas', 10))
+        self.result_text.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+    def cargar_datos(self):
+        """Procesa la entrada del usuario para crear la lista y la tabla hash."""
+        data_str = self.data_entry.get()
+        try:
+            self.lista_principal = [int(x.strip()) for x in data_str.split(',') if x.strip()]
+            
+            self.hash_map = {num: i for i, num in enumerate(self.lista_principal)}
+            
+            self.status_label.config(text=f"✅ Datos cargados. N: {len(self.lista_principal)} elementos.", foreground="green")
+            self.result_text.delete('1.0', tk.END)
+            self.result_text.insert(tk.END, f"Lista cargada: {self.lista_principal}\n")
+            self.result_text.insert(tk.END, f"Tabla Hash (Diccionario): {self.hash_map}\n")
+            
+        except ValueError:
+            messagebox.showerror("Error de Entrada", "Por favor, ingresa solo números enteros separados por comas.")
+            self.status_label.config(text="🛑 Error: Revisar formato de datos.", foreground="red")
+            self.lista_principal = []
+            self.hash_map = {}
+
+    def ejecutar_busqueda(self, tipo_busqueda):
+        """Coordina la ejecución de la búsqueda seleccionada."""
+        if not self.lista_principal:
+            messagebox.showwarning("Advertencia", "Primero debes cargar los datos (Paso 1).")
+            return
+        
+        try:
+            elemento_buscar = int(self.element_entry.get())
+        except ValueError:
+            messagebox.showerror("Error de Entrada", "Por favor, ingresa un número entero válido para buscar.")
+            return
+
+        self.result_text.delete('1.0', tk.END) # Limpiar resultados anteriores
+        self.result_text.insert(tk.END, f"--- Buscando **{elemento_buscar}** con {tipo_busqueda.upper()} ---\n")
+        
+        if tipo_busqueda == 'secuencial':
+            self.secuencial(elemento_buscar)
+        elif tipo_busqueda == 'binaria':
+            self.binaria(elemento_buscar)
+        elif tipo_busqueda == 'hash':
+            self.hash(elemento_buscar)
+
+
+    def secuencial(self, elemento):
+        """Implementa y muestra la búsqueda secuencial."""
+        inicio = time.time()
+        posicion = -1
+        for i in range(len(self.lista_principal)):
+            if self.lista_principal[i] == elemento:
+                posicion = i
+                break
+        fin = time.time()
+        tiempo = (fin - inicio) * 1000
+
+        if posicion != -1:
+            resultado = f"✅ ¡Encontrado! Posición: {posicion}"
+        else:
+            resultado = "❌ No encontrado."
+            
+        self.result_text.insert(tk.END, f"Lista utilizada: {self.lista_principal}\n")
+        self.result_text.insert(tk.END, f"{resultado}\n")
+        self.result_text.insert(tk.END, f"⏱️ Tiempo de ejecución: {tiempo:.6f} ms\n")
+
+    def binaria(self, elemento):
+        """Implementa y muestra la búsqueda binaria (en copia ordenada)."""
+        lista_ordenada = sorted(self.lista_principal)
+        
+        self.result_text.insert(tk.END, f"Lista **ordenada** para búsqueda: {lista_ordenada}\n")
+        
+        inicio = time.time()
+        izquierda, derecha = 0, len(lista_ordenada) - 1
+        posicion = -1
+        
+        while izquierda <= derecha:
+            medio = (izquierda + derecha) // 2
+            if lista_ordenada[medio] == elemento:
+                posicion = medio
+                break
+            elif lista_ordenada[medio] < elemento:
+                izquierda = medio + 1
+            else:
+                derecha = medio - 1
+                
+        fin = time.time()
+        tiempo = (fin - inicio) * 1000
+
+        if posicion != -1:
+            resultado = f"✅ ¡Encontrado! Índice en la lista ORDENADA: {posicion}"
+        else:
+            resultado = "❌ No encontrado."
+            
+        self.result_text.insert(tk.END, f"{resultado}\n")
+        self.result_text.insert(tk.END, f"⏱️ Tiempo de ejecución: {tiempo:.6f} ms\n")
+
+    def hash(self, elemento):
+        """Implementa y muestra la búsqueda hash (usando el diccionario)."""
+        inicio = time.time()
+        
+        posicion_original = self.hash_map.get(elemento)
+        
+        fin = time.time()
+        tiempo = (fin - inicio) * 1000
+
+        if posicion_original is not None:
+            valor_lista = self.lista_principal[posicion_original]
+            resultado = f"✅ ¡Clave Encontrada! Valor: {valor_lista}. Posición Original: {posicion_original}"
+        else:
+            resultado = "❌ Clave no encontrada en la tabla hash."
+            
+        self.result_text.insert(tk.END, f"Tabla Hash utilizada: {self.hash_map}\n")
+        self.result_text.insert(tk.END, f"{resultado}\n")
+        self.result_text.insert(tk.END, f"⏱️ Tiempo de ejecución: {tiempo:.6f} ms\n")
+
+    def on_closing(self):
+        """Maneja el cierre de la ventana."""
+        if messagebox.askokcancel("Salir", "¿Estás seguro de que quieres salir?"):
+            self.master.destroy()
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = BusquedaApp(root)
+    root.mainloop()
